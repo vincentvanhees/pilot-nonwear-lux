@@ -19,6 +19,17 @@ classifyNonwear = function(data, # assumed to have columns time and lux
   p95 = function(x) { #5th percentile
     return(as.numeric(quantile(x, probs = 0.95)))
   }
+  n_consecutive_nonzero = function(x) {
+    nonzero = x != 0
+    if (any(nonzero)) {
+      y = rle(nonzero)
+      z = max(y$lengths[y$values == TRUE])
+    } else {
+      z = 0
+    }
+    return(z)
+  }
+  
   # several daily stats
   aggDay = function(x) {
     z = (x - mean(x)) / sd(x)
@@ -26,7 +37,8 @@ classifyNonwear = function(data, # assumed to have columns time and lux
     return(c(mean_val = mean(x),
              n_peaks = n_peaks,
              n_values = length(x),
-             p05 = p05(x)))
+             p95 = p95(x),
+             ncn = n_consecutive_nonzero(x)))
   }
   # helper function to ease applying 1 and 16 hour rolling window functions:
   rollApply = function(data, window_size_hours, FUN, step_size, N) {
@@ -96,9 +108,9 @@ classifyNonwear = function(data, # assumed to have columns time and lux
     data$nonwearB[detect_B] = 1
   }
   N_epochs_per_day = (60/epoch_size) * 24 * 60
+  daily_stats = as.data.frame(daily_stats$x)
+  daily_stats$nonwearC = daily_stats$nonwearD = daily_stats$nonwearE = daily_stats$nonwearF = 0
   if (N / N_epochs_per_day > N_days_required_daily_stats) {
-    daily_stats = as.data.frame(daily_stats$x)
-    daily_stats$nonwearC = daily_stats$nonwearD = 0
     # C. Any day with both mean and peak values substantially lower
     # than other days in the recording.
     detect_C = which(daily_stats$n_values > N_epochs_per_day * 0.5 &
@@ -112,6 +124,21 @@ classifyNonwear = function(data, # assumed to have columns time and lux
     detect_D = which(abs((daily_stats$p05 - median(daily_stats$p05)) / sd(daily_stats$p05)) > 3)
     if (length(detect_D) > 0) {
       daily_stats$nonwearD[detect_D] = 1
+    }
+    # E. Any day where the upper tail of the lux distribution is 
+    # substantially lower than other days in the recording.
+    daily_stats$var_p95mean =  round(daily_stats$p95 / mean(daily_stats$mean_val), digits = 2)
+    detect_E = which(daily_stats$var_p95mean < 2 & daily_stats$n_values > 1200)
+    if (length(detect_E) > 0) {
+      daily_stats$nonwearE[detect_E] = 1
+    }
+    # F. Long sequences of non-zero, relative to other days in the recording and at least 300
+    # minutes in absolute terms
+    daily_stats$var_ncn =  round(daily_stats$ncn / median(daily_stats$ncn), digits = 2)
+    detect_F = which(daily_stats$var_ncn > 5 &
+                       daily_stats$ncn > 300 & daily_stats$n_values > 1200)
+    if (length(detect_F) > 0) {
+      daily_stats$nonwearF[detect_F] = 1
     }
   }
   # interpolate daily stats to merge with rest of data
