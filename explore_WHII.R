@@ -14,7 +14,7 @@ myVar = function(x) {
   return(mean(abs(diff(x))))
 }
 
-for (i in 1:length(fnames1)) {
+for (i in 21) { # 1:length(fnames1)
   print("----------------------------------------")
   print(paste0("i ", i))
   M = NULL
@@ -31,7 +31,7 @@ for (i in 1:length(fnames1)) {
   W = M$metalong[weari,]
   W = W[1:nrow(N),]
   
-  data = data.frame(time = M$metalong$timestamp, lux = M$metalong$lightpeak * 100)
+  data = data.frame(Datetime = M$metalong$timestamp, Lux = M$metalong$lightpeak * 100)
   source(paste0(getwd(), "/classifyNonwear.R"))
   data = classifyNonwear(data,
                          resolution_seconds = 60, # for computational only derive statistics at 1 minute resolution
@@ -80,12 +80,13 @@ for (i in 1:length(fnames1)) {
         type = "l", pch = 20, col = "green", cex = 0.05)
   scale_value = max(M$metalong$lightpeak)
   offset_value = scale_value * 0.02
-  lines(data$time, data$nonwearA * scale_value, type = "l", xlab = "",
+  lines(data$Datetime, data$nonwearA * scale_value, type = "l", xlab = "",
         main = "lux-based nonwear", ylim = c(0, 1), col = "orange")
-  lines(data$time, data$nonwearB * scale_value * 0.95 + offset_value, type = "l", col = "brown")
-  lines(data$time, data$nonwearC * scale_value * 0.9  + offset_value, type = "l", col = "cyan")
-  lines(data$time, data$nonwearD * scale_value * 0.85 + offset_value, type = "l", col = "purple")
-  lines(data$time, data$nonwearE * scale_value * 0.8  + offset_value, type = "l", col = "darkgreen")
-  lines(data$time, data$nonwearF * scale_value * 0.75  + offset_value, type = "l", col = "grey")
+  lines(data$Datetime, data$nonwearB * scale_value * 0.95 + offset_value, type = "l", col = "brown")
+  lines(data$Datetime, data$nonwearC * scale_value * 0.9  + offset_value, type = "l", col = "cyan")
+  lines(data$Datetime, data$nonwearD * scale_value * 0.85 + offset_value, type = "l", col = "purple")
+  lines(data$Datetime, data$nonwearE * scale_value * 0.8  + offset_value, type = "l", col = "darkgreen")
+  lines(data$Datetime, data$nonwearF * scale_value * 0.75  + offset_value, type = "l", col = "grey")
+  lines(data$Datetime, data$nonwearG * scale_value * 0.7  + offset_value, type = "l", col = "pink")
   dev.off()
 }

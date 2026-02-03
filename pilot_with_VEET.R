@@ -61,7 +61,7 @@ print(table(dataVEET$nonwear))
 # change column names to match expectation by function, to do: align with default in LightLogR
 data = dataVEET[, c("Lux", "Datetime")]
 colnames(data) = c("lux", "time")
-data$lux[is.na(data$lux)] = 0
+# data$lux[is.na(data$lux)] = 0
 source(paste0(getwd(), "/classifyNonwear.R"))
 data = classifyNonwear(data,
                        resolution_seconds = 60, # for computational only derive statistics at 1 minute resolution
@@ -73,10 +73,13 @@ data = classifyNonwear(data,
 # Crude plot to inspect classification
 graphics.off()
 x11()
-par(mfrow = c(5,1), mar = c(3, 3, 3, 1))
-plot(dataVEET$Datetime, dataVEET$Lux, type = "l", xlab = "", ylab = "Lux per 5 second")
-plot(dataVEET$Datetime, dataVEET$nonwear, type = "l", xlab = "", ylab = "Non-wear")
-plot(data$time, data$nonwearA, type = "l", xlab = "", main = "lux-based nonwear A", ylim = c(0, 1))
-plot(data$time, data$nonwearB, type = "l", xlab = "", main = "lux-based nonwear B", col = "red", ylim = c(0, 1))
-plot(data$time, data$nonwearC, type = "l", xlab = "", main = "lux nonwear C", col = "blue", ylim = c(0, 1))
-lines(data$time, data$nonwearD, type = "l", main = "lux nonwear D", col = "green")
+par(mfrow = c(4,2), mar = c(3, 3, 3, 1))
+plot(dataVEET$Datetime, dataVEET$Lux, type = "l", main ="lux")
+plot(dataVEET$Datetime, dataVEET$nonwear, type = "l", main = "reference nonwear", ylim = c(0, 1))
+lines(data$time, data$nonwear_estimate * 0.9, type = "l", col = "blue")
+plot(data$time, data$nonwearA, type = "l", main = "nonwear A", ylim = c(0, 1))
+plot(data$time, data$nonwearB, type = "l", main = "nonwear B")
+plot(data$time, data$nonwearC, type = "l", main = "nonwear C")
+plot(data$time, data$nonwearD, type = "l", main = "nonwear D")
+plot(data$time, data$nonwearE, type = "l", main = "nonwear F")
+plot(data$time, data$nonwearF, type = "l", main = "nonwear F")
