@@ -178,11 +178,7 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   } else {
     cat("Criteria C-F skipped because not more than 3 days of data.\n")
   }
-  # merge daily stats into data
-  # daily_stats = daily_stats[rep(1:nrow(daily_stats), daily_stats$n_values),]
-  # daily_stats = as.data.frame(daily_stats)
-  # data = cbind(data, daily_stats)
-  
+  # merge daily_stats into data
   data$date = as.Date(data$Datetime)
   data$nonwearC = data$nonwearD = data$nonwearE = data$nonwearF = 0
   for (j in 1:nrow(daily_stats)) {
