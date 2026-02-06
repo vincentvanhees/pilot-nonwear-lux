@@ -47,18 +47,21 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
       z = (x - mean_val) / sd(x)
       n_peaks = length(which(z > 3))
       n_values = length(x)
+      p05 = p05(x)
       p95 = p95(x)
       ncn = n_consecutive_nonzero(x)
     } else {
       mean_val = NA
       n_peaks = NA
       n_values = NA
+      p05 = NA
       p95 = NA
       ncn = NA
     }
     return(c(mean_val = mean_val,
              n_peaks = n_peaks,
              n_values = n_values,
+             p05 = p05,
              p95 = p95,
              ncn = ncn,
              NAper = NAper))
@@ -102,6 +105,9 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
                            FUN = min, step_size = step_size, N)
   sd_per_hour = rollApply(data$Lux, window_size_hours = 1,
                           FUN = sd, step_size = step_size, N)
+  
+  sd_diff_per_hour = rollApply(c(diff(data$Lux), 0), window_size_hours = 1,
+                          FUN = sd, step_size = step_size, N)
   mean_per_hour = rollApply(data$Lux, window_size_hours = 1,
                             FUN = mean, step_size = step_size, N)
   p05_per_hour = rollApply(data$Lux, window_size_hours = 1,
@@ -112,7 +118,7 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   # combine into one data.frame
   data = cbind(dplyr::ungroup(data), p95_per_16hours, NAper_per_16hours,
                min_per_hour, sd_per_hour, mean_per_hour, p05_per_hour,
-               NAper_per_hour)
+               NAper_per_hour, sd_diff_per_hour)
   # convert back to tibble as that is what LightLogR expects
   data = dplyr::group_by(data)
   
@@ -137,47 +143,61 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   }
   # B. Time windows with consistently a non-zero Lux but hardly any variation for at 
   # least an hour
-  detect_B = which((data$min_per_hour > pmin(min(data$min_per_hour, na.rm = TRUE), 1) &
-                     data$relvar_hour < minimum_relval_per_hour))
+  detect_B = which(data$min_per_hour > pmin(min(data$min_per_hour, na.rm = TRUE), 1) &
+                     (data$relvar_hour < minimum_relval_per_hour |
+                      data$sd_diff_per_hour < minimum_relval_per_hour))
   if (length(detect_B) > 0) {
     data$nonwearB[detect_B] = 1
   }
+  
   N_epochs_per_day = (60/epoch_size) * 24 * 60
   
   daily_stats$nonwearC = daily_stats$nonwearD = daily_stats$nonwearE = daily_stats$nonwearF = 0
-  if (N / N_epochs_per_day > N_days_required_daily_stats) {
-    # C. Any day with both mean and peak values substantially lower
-    # than other days in the recording and more than half a day worth of data points.
-    detect_C = which(daily_stats$n_values > N_epochs_per_day * 0.5 &
-                       (daily_stats$mean_val < mean(daily_stats$mean_val) * 0.5 &
-                          daily_stats$n_peaks < mean(daily_stats$n_peaks) * 0.5))
-    if (length(detect_C) > 0) {
-      daily_stats$nonwearC[detect_C] = 1
-    }
-    # D. Any day where the lower tail of the Lux distribution is 
-    # substantially higher than other days in the recording. 
-    detect_D = which(abs((daily_stats$p05 - median(daily_stats$p05)) / sd(daily_stats$p05)) > 3)
-    if (length(detect_D) > 0) {
-      daily_stats$nonwearD[detect_D] = 1
-    }
-    # E. Any day where the upper tail of the Lux distribution is 
-    # substantially lower than other days in the recording.
-    daily_stats$var_p95mean =  round(daily_stats$p95 / mean(daily_stats$mean_val), digits = 2)
-    detect_E = which(daily_stats$var_p95mean < 2 & daily_stats$n_values > 1200)
-    if (length(detect_E) > 0) {
-      daily_stats$nonwearE[detect_E] = 1
-    }
-    # F. Long sequences of non-zero, relative to other days in the recording and at least 300
-    # minutes in absolute terms
-    daily_stats$var_ncn =  round(daily_stats$ncn / median(daily_stats$ncn), digits = 2)
-    detect_F = which(daily_stats$var_ncn > 5 &
-                       daily_stats$ncn > 300 & daily_stats$n_values > 1200)
-    if (length(detect_F) > 0) {
-      daily_stats$nonwearF[detect_F] = 1
-    }
+  derive_ref_values = N / N_epochs_per_day > N_days_required_daily_stats
+  if (derive_ref_values) {
+    mean_daily_mean_lux = mean(daily_stats$mean_val) # Criteria C + E
+    mean_daily_n_peaks = mean(daily_stats$n_peaks) # Criteria C
+    median_daily_p05 = median(daily_stats$p05) # Criteria D
+    sd_daily_p05 = sd(daily_stats$p05) # Criteria D
+    median_daily_ncn = median(daily_stats$ncn) # Criteria F 
   } else {
-    cat("Criteria C-F skipped because not more than 3 days of data.\n")
+    cat("Criteria C-F rely on reference values as there are less than 3 days of data.\n")
+    mean_daily_mean_lux = 277.6518 # Criteria C + E
+    mean_daily_n_peaks = 78.57143 # Criteria C
+    median_daily_p05 = 0.001733333 # Criteria D
+    sd_daily_p05 = 3.147352 # Criteria D
+    median_daily_ncn = 5662 # Criteria F 
   }
+  # C. Any day with both mean and peak values substantially lower
+  # than other days in the recording and more than half a day worth of data points.
+  detect_C = which(daily_stats$n_values > N_epochs_per_day * 0.5 &
+                     (daily_stats$mean_val < mean_daily_mean_lux * 0.5 &
+                        daily_stats$n_peaks < mean_daily_n_peaks * 0.5))
+  if (length(detect_C) > 0) {
+    daily_stats$nonwearC[detect_C] = 1
+  }
+  # D. Any day where the lower tail of the Lux distribution is 
+  # substantially higher than other days in the recording. 
+  detect_D = which(abs((daily_stats$p05 - median_daily_p05) / sd_daily_p05) > 3)
+  if (length(detect_D) > 0) {
+    daily_stats$nonwearD[detect_D] = 1
+  }
+  # E. Any day where the upper tail of the Lux distribution is 
+  # substantially lower than other days in the recording.
+  daily_stats$var_p95mean =  round(daily_stats$p95 / mean_daily_mean_lux, digits = 2)
+  detect_E = which(daily_stats$var_p95mean < 2 & daily_stats$n_values > 1200)
+  if (length(detect_E) > 0) {
+    daily_stats$nonwearE[detect_E] = 1
+  }
+  # F. Long sequences of non-zero, relative to other days in the recording and at least 300
+  # minutes in absolute terms
+  daily_stats$var_ncn =  round(daily_stats$ncn / median_daily_ncn, digits = 2)
+  detect_F = which(daily_stats$var_ncn > 5 &
+                     daily_stats$ncn > 300 & daily_stats$n_values > 1200)
+  if (length(detect_F) > 0) {
+    daily_stats$nonwearF[detect_F] = 1
+  }
+  
   # merge daily_stats into data
   data$date = as.Date(data$Datetime)
   data$nonwearC = data$nonwearD = data$nonwearE = data$nonwearF = 0
