@@ -51,6 +51,9 @@ applyClassifyNonwear = function(data, # assumed to have columns time and Lux, an
         is.na(data_subset$nonwearG[which(data_subset$nonwearG == 0)]) = TRUE
         is.na(data_subset$nonwear_estimate[which(data_subset$nonwear_estimate == 0)]) = TRUE
         is.na(data_subset$nonwear_ref[which(data_subset$nonwear_ref == 0)]) = TRUE
+        if (length(which(is.na(data_subset$Lux)))) {
+          is.na(data_subset$Lux[which(is.na(data_subset$Lux))]) = TRUE
+        }
         #----------------------------------
         # Generate png file
         png(filename = paste0(plot_path, "/", plot_id, "_segment_", i, ".png"), width = 9, height = 6, units = "in", res = 300)
