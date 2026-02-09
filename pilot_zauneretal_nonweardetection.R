@@ -35,5 +35,5 @@ for (filename in c("Left_Temple_Sensor_Data.csv", "Right_Temple_Sensor_Data.csv"
                              lowLuxThreshold = 50, # Lux below this value is considered closed to zero
                              maxLowLuxSequenceHours = 16,
                              plot_path = "D:/Projects/Spitschan",
-                             plot_id =  "Left_Temple_Sensor_Data.csv") # max number of hours with low Lux
+                             plot_id =  filename) # max number of hours with low Lux
 }
