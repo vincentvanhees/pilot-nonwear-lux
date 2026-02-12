@@ -1,5 +1,5 @@
 classifyNonwear = function(data, # assumed to have columns time and Lux, and represent a continuous regular time series
-                           resolution_seconds = 60, # for computational only deride statistics at 1 minute resolution
+                           resolution_seconds = 60, # for computational reasons only derive statistics at 30 sec resolution
                            N_days_required_daily_stats = 3,
                            minimum_relval_per_hour = 0.1, #minimum relative variance per hour
                            epoch_size = 5, # epoch size in seconds
@@ -160,10 +160,10 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   # Criteria C, D, E and F
   N_epochs_per_day = (60/epoch_size) * 24 * 60
   daily_stats$nonwearC = daily_stats$nonwearD = daily_stats$nonwearE = daily_stats$nonwearF = 0
-  # Assess whether there there 3 days of data
+  # Assess whether there are 3 days of data
   derive_ref_values = N / N_epochs_per_day > N_days_required_daily_stats
   if (derive_ref_values) { 
-    # More than 3  days of data
+    # More than 3 days of data
     # Derive various reference values needed for criteria C, D, E and/or F
     mean_daily_mean_lux = mean(daily_stats$mean_val) # Criteria C + E
     mean_daily_n_peaks = mean(daily_stats$n_peaks) # Criteria C
