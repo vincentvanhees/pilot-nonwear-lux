@@ -63,7 +63,6 @@ for (i in 1:nrow(wear_data)) {
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Classify nonwear
-
 filename = "01_VEET_L.csv.zip"
 
 # Prepare data:
@@ -77,13 +76,13 @@ VEET$nonwear = as.numeric(VEET$nonwear)
 # make sure nonwear column has NA when Lux has NA
 is.na(VEET$nonwear[is.na(VEET$Lux)]) = TRUE
 
-# change column names to match expectation by function, to do: align with default in LightLogR
+# keep only column names that will be used
 VEET = VEET[, c("Datetime", "Lux", "nonwear")]
 colnames(VEET)[3] = "nonwear_ref"
 
 # Run classifier
 out = applyClassifyNonwear(VEET, # assumed to have columns time and Lux, and represent a continuous regular time series
-                           resolution_seconds = 60, # for computational only deride statistics at 1 minute resolution
+                           resolution_seconds = 60, # for computational reasons only derive statistics at 60 sec resolution
                            N_days_required_daily_stats = 3,
                            minimum_relval_per_hour = 0.1, #minimum relative variance per hour
                            epoch_size = 5, # epoch size in seconds

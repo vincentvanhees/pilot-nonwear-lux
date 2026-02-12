@@ -23,12 +23,12 @@ for (filename in c("Left_Temple_Sensor_Data.csv", "Right_Temple_Sensor_Data.csv"
   # make sure nonwear column has NA when Lux has NA
   is.na(data$nonwear[is.na(data$Lux)]) = TRUE
   
-  # change column names to match expectation by function, to do: align with default in LightLogR
+  # keep only column names that will be used
   data = data[, c("Datetime", "Lux", "nonwear")]
-  colnames(data)[3] = "nonwear_ref"
+  colnames(data)[3] = "nonwear_ref" # rename to clarify that this is reference nonwear
   
   out = applyClassifyNonwear(data, # assumed to have columns time and Lux, and represent a continuous regular time series
-                             resolution_seconds = 30, # for computational only deride statistics at 1 minute resolution
+                             resolution_seconds = 30, # for computational reasons only derive statistics at 30 sec resolution
                              N_days_required_daily_stats = 3,
                              minimum_relval_per_hour = 0.7, #minimum relative variance per hour
                              epoch_size = 5, # epoch size in seconds

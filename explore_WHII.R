@@ -32,7 +32,7 @@ for (i in 1:5) { # 1:length(fnames1)
   colnames(data)[3] = "nonwear_ref"
   
   out = applyClassifyNonwear(data, # assumed to have columns time and Lux, and represent a continuous regular time series
-                             resolution_seconds = 60, # for computational only deride statistics at 1 minute resolution
+                             resolution_seconds = 60, # for computational reasons only derive statistics at 30 sec resolution
                              N_days_required_daily_stats = 3,
                              minimum_relval_per_hour = 0.1, #minimum relative variance per hour
                              epoch_size = 60, # epoch size in seconds
