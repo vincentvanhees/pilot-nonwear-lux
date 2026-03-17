@@ -15,132 +15,32 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   N = nrow(data) #length(which(!is.na(data$Lux)))
   original_colnames = colnames(data)
   
-  #=============================================================================
-  # Declare local functions to aid derivation of temporal statistics:
-  #=============================================================================
-  p05 = function(x) { #5th percentile of x
-    return(as.numeric(quantile(x, probs = 0.05, na.rm = TRUE)))
-  }
-  p95 = function(x) { #5th percentile of x
-    return(as.numeric(quantile(x, probs = 0.95, na.rm = TRUE)))
-  }
-  NA_percentage = function(x) { # percentage of NA values in x
-    return((length(which(is.na(x))) / length(x)) * 100)
-  }
-  n_consecutive_nonzero = function(x, lowLuxThreshold) { # Length of longest sequences of zeros
-    nonzero = x < lowLuxThreshold
-    if (any(nonzero, na.rm = TRUE)) {
-      y = rle(nonzero)
-      z = max(y$lengths[y$values == TRUE], na.rm = TRUE)
-    } else {
-      z = 0
-    }
-    return(z)
-  }
-  # One function to derive multiple stats per calendar day
-  aggDay = function(x, lowLuxThreshold = lowLuxThreshold) {
-    NAper = NA_percentage(x)
-    if (NAper < 25) {
-      mean_val = mean(x, na.rm = TRUE)
-      z = (x - mean_val) / sd(x)
-      n_peaks = length(which(z > 3))
-      n_values = length(x)
-      p05 = p05(x)
-      p95 = p95(x)
-      ncnz = n_consecutive_nonzero(x, lowLuxThreshold)
-    } else {
-      mean_val = NA
-      n_peaks = NA
-      n_values = NA
-      p05 = NA
-      p95 = NA
-      ncnz = NA
-    }
-    return(c(mean_val = mean_val,
-             n_peaks = n_peaks,
-             n_values = n_values,
-             p05 = p05,
-             p95 = p95,
-             ncnz = ncnz,
-             NAper = NAper))
-  }
-  # Helper function to ease applying 1- and 16 hour rolling window functions:
-  rollApply = function(data, window_size_hours, FUN, step_size, N) {
-    half_window_size = ceiling(window_size_hours * 60 * (60 / epoch_size) / 2)
-    x = slider::slide_dbl(data,
-                          ~FUN(.x),
-                          .before = half_window_size,
-                          .after = half_window_size,
-                          .step = step_size,
-                          .complete = FALSE)
-    # interpolate NA values created by slide_dbl because of the 
-    # steps it takes
-    valid = which(!is.na(x) == TRUE)
-    half_step_size = round(step_size / 2)
-    for (i in c(-half_step_size:-1, 1:half_step_size)) {
-      validi = valid + i
-      select = which(validi > 0 & validi <= N)
-      x[validi[select]] = x[valid[select]]
-    }
-    return(x)
-  }
+  tempStats = temporalStatistics(data = data,
+                                 epoch_size = epoch_size,
+                                 lowLuxThreshold = lowLuxThreshold,
+                                 maxLowLuxSequenceHours = maxLowLuxSequenceHours,
+                                 step_size = step_size,
+                                 N = N)
   
-  #=============================================================================
-  # Derive temporal statistics as needed for classification
-  #=============================================================================
-  # add hour and day column
-  data$hour = floor((as.numeric(data$Datetime) - as.numeric(data$Datetime[1])) / 3600)
-  data$day = as.Date(data$Datetime)
-  # daily aggregate
-  daily_stats = aggregate(data$Lux, by = list(data$day), FUN = aggDay, lowLuxThreshold = lowLuxThreshold)
-  daily_stats = as.data.frame(daily_stats$x)
-  daily_stats$day = unique(data$day)
-  # rolling 16 hour window aggregates
-  p95_per_16hours = rollApply(data$Lux, window_size_hours = maxLowLuxSequenceHours,
-                              FUN = p95, step_size = step_size, N)
-  NAper_per_16hours = rollApply(data$Lux, window_size_hours = maxLowLuxSequenceHours,
-                                FUN = NA_percentage, step_size = step_size, N)
-  # rolling 1 hour aggregates
-  min_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                           FUN = min, step_size = step_size, N)
-  sd_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                          FUN = sd, step_size = step_size, N)
-  sd_diff_per_hour = rollApply(c(diff(data$Lux), 0), window_size_hours = 1,
-                          FUN = sd, step_size = step_size, N)
-  mean_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                            FUN = mean, step_size = step_size, N)
-  p05_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                           FUN = p05, step_size = step_size, N)
-  NAper_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                             FUN = NA_percentage, step_size = step_size, N)
-  # combine into one data.frame
-  data = cbind(dplyr::ungroup(data), p95_per_16hours, NAper_per_16hours,
-               min_per_hour, sd_per_hour, mean_per_hour, p05_per_hour,
-               NAper_per_hour, sd_diff_per_hour)
-  # convert back to tibble as that is what LightLogR expects
-  data = dplyr::group_by(data)
-  # add measure of relative variance per hour
-  data$relvar_hour = 0
-  nonzero = which(data$mean_per_hour != 0)
-  if (length(nonzero) > 0) {
-    data$relvar_hour[nonzero] = data$sd_per_hour[nonzero] / data$mean_per_hour[nonzero]
-  }
+  data = tempStats$data
+  daily_stats = tempStats$daily_stats
   #=============================================================================
   # Lux-based non-wear classification
   #=============================================================================
   # Initialise to 0 (nonwear = 0 reflects wear time, nonwear = 1 refletcs nonwear time)
-  data$nonwearA = data$nonwearB = 0 
-  #--------------------------------------------
+  data$nonwearA = data$nonwearB = 0   
+  
+  # -------------------------------
   # Criteria A:
   # Any time window in the data longer than plausible sleep window (16 hours)
   # that is filled with mostly zeros.
-  detect_A = which(data$p95_per_16hours < lowLuxThreshold)
-  if (length(detect_A) > 0) {
-    data$nonwearA[detect_A] = 1
-    # Make sure all 16 hours are labelled and not just the epoch in the center
-    data$nonwearA = rollApply(data$nonwearA, window_size_hours = maxLowLuxSequenceHours,
-                              FUN = max, step_size = step_size, N)
-  }
+  data$nonwearA = longLowValue(x = data$p95_per_16hours,
+                               x_threshold = lowLuxThreshold,
+                               window_size_hours = maxLowLuxSequenceHours,
+                               N = N,
+                               step_size = step_size,
+                               epoch_size = epoch_size)
+  
   #--------------------------------------------
   # Criteria B:
   # Time windows with consistently a non-zero Lux but hardly any lux variation for at 
@@ -152,7 +52,7 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   minimum_value = pmin(min(data$min_per_hour, na.rm = TRUE), 1)
   detect_B = which(data$min_per_hour > minimum_value &
                      (data$relvar_hour < minimum_relval_per_hour |
-                      data$sd_diff_per_hour < minimum_relval_per_hour))
+                        data$sd_diff_per_hour < minimum_relval_per_hour))
   if (length(detect_B) > 0) {
     data$nonwearB[detect_B] = 1
   }
@@ -184,8 +84,8 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   # Any day with both mean and peak values substantially lower
   # than other days in the recording and more than half a day worth of data points.
   detect_C = which((daily_stats$mean_val < mean_daily_mean_lux * 0.5 &
-                        daily_stats$n_peaks < mean_daily_n_peaks * 0.5) &
-                          daily_stats$n_values > N_epochs_per_day * 0.5)
+                      daily_stats$n_peaks < mean_daily_n_peaks * 0.5) &
+                     daily_stats$n_values > N_epochs_per_day * 0.5)
   if (length(detect_C) > 0) {
     daily_stats$nonwearC[detect_C] = 1
   }

@@ -3,6 +3,9 @@ graphics.off()
 
 library(slider)
 source(paste0(getwd(), "/classifyNonwear.R"))
+source(paste0(getwd(), "/temporalStatistics.R"))
+source(paste0(getwd(), "/rollApply.R"))
+source(paste0(getwd(), "/longLowValue.R"))
 source(paste0(getwd(), "/applyClassifyNonwear.R"))
 
 load("D:/Code/ZaunerEtAl_NonWearDetection/data/cleaned/wear_data_cleaned.RData")

@@ -9,6 +9,8 @@ library(downlit)
 library(magick)
 
 source(paste0(getwd(), "/classifyNonwear.R"))
+source(paste0(getwd(), "/temporalStatistics.R"))
+source(paste0(getwd(), "/rollApply.R"))
 source(paste0(getwd(), "/applyClassifyNonwear.R"))
 
 
