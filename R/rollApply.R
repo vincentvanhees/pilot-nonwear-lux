@@ -1,5 +1,21 @@
+
+#' Helper function to ease applying 1- and 16 hour rolling window functions
+#'
+#' @description Helper function to ease applying 1- and 16 hour rolling window functions
+#'
+#' @param data Tibble, that holds at least a Datetime and Lux column
+#' @param window_size_hours Numeric, rolling window size in hours
+#' @param FUN Function to be applied per hour
+#' @param step_size Numeric, integrer as used for  slider::slide_dbl argument .step.
+#' @param epoch_size Numeric, epoch size  of input data in seconds
+#'
+#' @return Numeric vector with with length equal to the number of rows in data with function output
+#' 
+#' @export
+
 # Helper function to ease applying 1- and 16 hour rolling window functions:
-rollApply = function(data, window_size_hours, FUN, step_size, N, epoch_size) {
+rollApply = function(data, window_size_hours, FUN, step_size, epoch_size) {
+  N = nrow(data)
   half_window_size = ceiling(window_size_hours * 60 * (60 / epoch_size) / 2)
   x = slider::slide_dbl(data,
                         ~FUN(.x),

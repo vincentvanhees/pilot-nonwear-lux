@@ -1,13 +1,25 @@
-temporalStatistics = function(data, # assumed to have columns time and Lux, and represent a continuous regular time series
-                              epoch_size = 5, # epoch size in seconds
-                              lowLuxThreshold = 50, # Lux below this value is considered closed to zero
-                              maxLowLuxSequenceHours = 16, # max number of hours with low Lux
-                              step_size = NULL,
-                              N = NULL)
+#' Derive temporal statistics from a tibble with time series
+#'
+#' @description Adds temporal statistics to tibble to a tibble with time series \cr
+#' and derive a separate data.frame with daily statistics
+#'
+#' @param data Tibble, that holds at least a Datetime and Lux column
+#' @param epoch_size Numeric, epoch size  of input data in seconds
+#' @param lowLuxThreshold Numeric, Lux value below which Lux is considered zero (darkness).
+#' @param maxLowLuxSequenceHours Numeric, maximum number of hours with low lux
+#' @param step_size Numeric, used as input for function \link{rollApply}
+#' 
+#' @export
+#'
+#' @return Tibble data provided as input enhanced with temporal statistics
+temporalStatistics = function(data,
+                              epoch_size = 5,
+                              lowLuxThreshold = 50,
+                              maxLowLuxSequenceHours = 16,
+                              step_size = NULL)
 {
   #=============================================================================
   # Declare local functions to aid derivation of temporal statistics:
-  #=============================================================================
   p05 = function(x) { #5th percentile of x
     return(as.numeric(quantile(x, probs = 0.05, na.rm = TRUE)))
   }
@@ -30,6 +42,8 @@ temporalStatistics = function(data, # assumed to have columns time and Lux, and 
   # One function to derive multiple stats per calendar day
   aggDay = function(x, lowLuxThreshold = lowLuxThreshold) {
     NAper = NA_percentage(x)
+    mean_val = n_peaks = n_values = NA
+    p05 = p95 = ncnz = NA
     if (NAper < 25) {
       mean_val = mean(x, na.rm = TRUE)
       z = (x - mean_val) / sd(x)
@@ -38,13 +52,6 @@ temporalStatistics = function(data, # assumed to have columns time and Lux, and 
       p05 = p05(x)
       p95 = p95(x)
       ncnz = n_consecutive_nonzero(x, lowLuxThreshold)
-    } else {
-      mean_val = NA
-      n_peaks = NA
-      n_values = NA
-      p05 = NA
-      p95 = NA
-      ncnz = NA
     }
     return(c(mean_val = mean_val,
              n_peaks = n_peaks,
@@ -54,11 +61,8 @@ temporalStatistics = function(data, # assumed to have columns time and Lux, and 
              ncnz = ncnz,
              NAper = NAper))
   }
-
-  
   #=============================================================================
   # Derive temporal statistics as needed for classification
-  #=============================================================================
   # add hour and day column
   data$hour = floor((as.numeric(data$Datetime) - as.numeric(data$Datetime[1])) / 3600)
   data$day = as.Date(data$Datetime)
@@ -68,22 +72,22 @@ temporalStatistics = function(data, # assumed to have columns time and Lux, and 
   daily_stats$day = unique(data$day)
   # rolling 16 hour window aggregates
   p95_per_16hours = rollApply(data$Lux, window_size_hours = maxLowLuxSequenceHours,
-                              FUN = p95, step_size = step_size, N, epoch_size)
+                              FUN = p95, step_size = step_size, epoch_size)
   NAper_per_16hours = rollApply(data$Lux, window_size_hours = maxLowLuxSequenceHours,
-                                FUN = NA_percentage, step_size = step_size, N, epoch_size)
+                                FUN = NA_percentage, step_size = step_size, epoch_size)
   # rolling 1 hour aggregates
   min_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                           FUN = min, step_size = step_size, N, epoch_size)
+                           FUN = min, step_size = step_size, epoch_size)
   sd_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                          FUN = sd, step_size = step_size, N, epoch_size)
+                          FUN = sd, step_size = step_size, epoch_size)
   sd_diff_per_hour = rollApply(c(diff(data$Lux), 0), window_size_hours = 1,
-                               FUN = sd, step_size = step_size, N, epoch_size)
+                               FUN = sd, step_size = step_size, epoch_size)
   mean_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                            FUN = mean, step_size = step_size, N, epoch_size)
+                            FUN = mean, step_size = step_size, epoch_size)
   p05_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                           FUN = p05, step_size = step_size, N, epoch_size)
+                           FUN = p05, step_size = step_size, epoch_size)
   NAper_per_hour = rollApply(data$Lux, window_size_hours = 1,
-                             FUN = NA_percentage, step_size = step_size, N, epoch_size)
+                             FUN = NA_percentage, step_size = step_size, epoch_size)
   # combine into one data.frame
   data = cbind(dplyr::ungroup(data), p95_per_16hours, NAper_per_16hours,
                min_per_hour, sd_per_hour, mean_per_hour, p05_per_hour,

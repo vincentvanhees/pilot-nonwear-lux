@@ -1,35 +1,49 @@
-classifyNonwear = function(data, # assumed to have columns time and Lux, and represent a continuous regular time series
-                           resolution_seconds = 60, # for computational reasons only derive statistics at 30 sec resolution
+
+#' Add classifications of potential abnormalities to input data.
+#'
+#' @description Add classifications of potential abnormalities to input data.
+#'
+#' @param data Tibble, that holds at least a Datetime and Lux column. Date time is expected to be a regular time series.
+#' @param resolution_seconds Numeric, resolution in seconds at which to perform analysis. \cr
+#' When epoch_size is small, consider setting this to a multitude of the \code{epoch_size} to speed up processing.
+#' @param N_days_required_daily_stats Numeric, integer to indicate the minimum number \cr
+#'  of days required for deriving daily statistics
+#' @param minimum_relval_per_hour Numeric, minimum relative variance per hour
+#' @param epoch_size Numeric, epoch size  of input data in seconds
+#' @param lowLuxThreshold Numeric, Lux value below which Lux is considered zero (darkness).
+#' @param maxLowLuxSequenceHours Numeric, maximum number of hours with low lux
+#'
+#' @return Tibble data provided as input enhanced with classifications
+#' 
+#' @importFrom stats aggregate median quantile sd
+#' 
+#' @export
+classifyAbnormal = function(data,
+                           resolution_seconds = 60, 
                            N_days_required_daily_stats = 3,
-                           minimum_relval_per_hour = 0.1, #minimum relative variance per hour
-                           epoch_size = 5, # epoch size in seconds
-                           lowLuxThreshold = 50, # Lux below this value is considered closed to zero
-                           maxLowLuxSequenceHours = 16) # max number of hours with low Lux
+                           minimum_relval_per_hour = 0.1,
+                           epoch_size = 5,
+                           lowLuxThreshold = 50,
+                           maxLowLuxSequenceHours = 16) 
 {
   if (length(table(diff(data$Datetime))) != 1) {
     stop("Irregular time series is not accepted for non-wear classification")
   }
-  
-  # Code dependencies: slider
   step_size = resolution_seconds / epoch_size
   N = nrow(data) #length(which(!is.na(data$Lux)))
   original_colnames = colnames(data)
-  
+  #============================================
+  # Derive temporal statistics as used for the various classifiers further down
   tempStats = temporalStatistics(data = data,
                                  epoch_size = epoch_size,
                                  lowLuxThreshold = lowLuxThreshold,
                                  maxLowLuxSequenceHours = maxLowLuxSequenceHours,
-                                 step_size = step_size,
-                                 N = N)
-  
+                                 step_size = step_size)
   data = tempStats$data
   daily_stats = tempStats$daily_stats
-  #=============================================================================
-  # Lux-based non-wear classification
-  #=============================================================================
-  # Initialise to 0 (nonwear = 0 reflects wear time, nonwear = 1 refletcs nonwear time)
-  data$nonwearA = data$nonwearB = 0   
-  
+  #============================================
+  # Classify abnormality based on time series (Criteria A-B)
+  data$nonwearA = data$nonwearB = 0 # 0 = good, 1 = potentially abnormal
   # -------------------------------
   # Criteria A:
   # Any time window in the data longer than plausible sleep window (16 hours)
@@ -37,17 +51,15 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
   data$nonwearA = longLowValue(x = data$p95_per_16hours,
                                x_threshold = lowLuxThreshold,
                                window_size_hours = maxLowLuxSequenceHours,
-                               N = N,
                                step_size = step_size,
                                epoch_size = epoch_size)
   #--------------------------------------------
   # Criteria B:
   # Time windows with consistently a non-zero Lux but hardly any lux variation for at
   # least an hour or variance in the derivative of the lux.
-  data$nonwearB = constantNonZeroLux(data, minimum_relval_per_hour, N)
-  
-  #--------------------------------------------
-  # Criteria C, D, E and F
+  data$nonwearB = constantNonZeroLux(data, minimum_relval_per_hour)
+  #============================================
+  # Classify abnormality based on daily statistics (Criteria C-F)
   N_epochs_per_day = (60/epoch_size) * 24 * 60
   daily_stats$nonwearC = daily_stats$nonwearD = daily_stats$nonwearE = daily_stats$nonwearF = 0
   # Assess whether there are 3 days of data
@@ -140,7 +152,7 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
     }
   }
   nonwear_col_names = c("nonwearA", "nonwearB", "nonwearC", "nonwearD",
-                        "nonwearE","nonwearF", "nonwearG")
+                        "nonwearE", "nonwearF", "nonwearG")
   data$nonwear_estimate = apply(data[, nonwear_col_names], 1, hasNonZero)
   # Remove temporary variables
   # data = data[,c(original_colnames, grep(pattern = "nonwear", x = colnames(data), value = TRUE))]
