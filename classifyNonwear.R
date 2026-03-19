@@ -40,22 +40,12 @@ classifyNonwear = function(data, # assumed to have columns time and Lux, and rep
                                N = N,
                                step_size = step_size,
                                epoch_size = epoch_size)
-  
   #--------------------------------------------
   # Criteria B:
-  # Time windows with consistently a non-zero Lux but hardly any lux variation for at 
+  # Time windows with consistently a non-zero Lux but hardly any lux variation for at
   # least an hour or variance in the derivative of the lux.
+  data$nonwearB = constantNonZeroLux(data, minimum_relval_per_hour, N)
   
-  # Not every sensor is able to measure zero, so identify what minimum value is from the data
-  # but this should not be higher than 1 Lux.
-  # relvar is calculated above as the standard deviation per hour divided by the mean per hour.
-  minimum_value = pmin(min(data$min_per_hour, na.rm = TRUE), 1)
-  detect_B = which(data$min_per_hour > minimum_value &
-                     (data$relvar_hour < minimum_relval_per_hour |
-                        data$sd_diff_per_hour < minimum_relval_per_hour))
-  if (length(detect_B) > 0) {
-    data$nonwearB[detect_B] = 1
-  }
   #--------------------------------------------
   # Criteria C, D, E and F
   N_epochs_per_day = (60/epoch_size) * 24 * 60

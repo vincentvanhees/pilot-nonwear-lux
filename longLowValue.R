@@ -5,7 +5,7 @@ longLowValue = function(x, x_threshold, window_size_hours, N, step_size, epoch_s
   classification = rep(0, N)
   condition_met = which(x < x_threshold)
   if (length(condition_met) > 0) {
-    data$nonwearA[condition_met] = 1
+    classification[condition_met] = 1
     # Label all 16 hours and not only the epoch in the center
     classification = rollApply(classification, window_size_hours = window_size_hours,
                                FUN = max, step_size = step_size, N, epoch_size)
