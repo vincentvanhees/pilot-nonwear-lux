@@ -2,6 +2,13 @@
 
 Code to explore identifying abnormalities in lux data based on criteria referred to with capital letters (A, B, etc).
 
+## Install and load
+
+```
+remotes::install_github("vincentvanhees/pilot-nonwear-lux")`
+library(abnormality)
+```
+
 ## Input
 
 ### data
@@ -46,3 +53,8 @@ Wrapper function around function `classifyAbnormal`:
   1. Per day
   2. Per epoch, with code to apply rolling window characteristics
 - Modify `classifyAbnormal` to use these new statistics. Here you can modify the existing criteria or or add new one. When adding new ones make sure to use the same name structure starting with indicator_.
+
+
+## Example scripts
+
+[pilot_with_VEET.R](https://github.com/vincentvanhees/pilot-nonwear-lux/blob/main/pilot_with_VEET.R) and [pilot_zauneretal_nonweardetection.R](https://github.com/vincentvanhees/pilot-nonwear-lux/blob/main/pilot_zauneretal_nonweardetection.R) are examples of how to use the packages.
