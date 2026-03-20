@@ -1,0 +1,17 @@
+Package: abnormality
+Type: Package
+Title: Identify Abnormality In Lux Time Series
+Version: 0.0.1
+Date: 2026-03-19
+Authors@R: c(person("Vincent T","van Hees",role=c("aut","cre"),
+                  email="v.vanhees@accelting.com"))
+Maintainer: Vincent T van Hees <v.vanhees@accelting.com>
+Description: Identify Abnormality In Lux Time Series.
+URL: https://github.com/vincentvanhees/pilot-nonwear-lux
+BugReports: https://github.com/vincentvanhees/pilot-nonwear-lux/issues
+License: Apache License (== 2.0)
+Suggests: testthat, covr
+Imports: slider, LightLogR, dplyr
+Depends: R (>= 4.1.0)
+Encoding: UTF-8
+RoxygenNote: 7.3.3

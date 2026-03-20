@@ -8,9 +8,8 @@ library(ggridges)
 library(downlit)
 library(magick)
 
-source(paste0(getwd(), "/classifyNonwear.R"))
-source(paste0(getwd(), "/applyClassifyNonwear.R"))
-
+library(abnormality)
+# devtools::load_all(".")
 
 path <- "D:/Projects/Spitschan/01_VEET_L.csv.zip"
 tz   <- "US/Central"
@@ -81,14 +80,14 @@ VEET = VEET[, c("Datetime", "Lux", "nonwear")]
 colnames(VEET)[3] = "nonwear_ref"
 
 # Run classifier
-out = applyClassifyNonwear(VEET, # assumed to have columns time and Lux, and represent a continuous regular time series
-                           resolution_seconds = 60, # for computational reasons only derive statistics at 60 sec resolution
-                           N_days_required_daily_stats = 3,
-                           minimum_relval_per_hour = 0.1, #minimum relative variance per hour
-                           epoch_size = 5, # epoch size in seconds
-                           lowLuxThreshold = 50, # Lux below this value is considered closed to zero
-                           maxLowLuxSequenceHours = 16,
-                           plot_path = "D:/Projects/Spitschan",
-                           plot_id = filename) # max number of hours with low Lux
+out = applyClassifyAbnormal(VEET, # assumed to have columns time and Lux, and represent a continuous regular time series
+                            resolution_seconds = 60, # for computational reasons only derive statistics at 60 sec resolution
+                            N_days_required_daily_stats = 3,
+                            minimum_relval_per_hour = 0.1, #minimum relative variance per hour
+                            epoch_size = 5, # epoch size in seconds
+                            lowLuxThreshold = 50, # Lux below this value is considered closed to zero
+                            maxLowLuxSequenceHours = 16,
+                            plot_path = "D:/Projects/Spitschan",
+                            plot_id = filename) # max number of hours with low Lux
 
 
