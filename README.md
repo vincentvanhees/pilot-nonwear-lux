@@ -32,7 +32,7 @@ For example, weight_A for indicator_A. Weight can be useful for masking parts of
 
 ### various other parameters
 
-Used to configure the identification criteria as can be found in the documentation of in function classifyAbnormal.
+Used to configure the identification criteria as can be found in the [documentation](https://github.com/vincentvanhees/pilot-nonwear-lux/blob/main/man/classifyAbnormal.Rd) of in function classifyAbnormal.
 
 
 ## Key functions
