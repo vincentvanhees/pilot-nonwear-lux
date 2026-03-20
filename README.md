@@ -1,6 +1,10 @@
 # R package abnormality
 
-Code to explore identifying abnormalities in lux data based on criteria referred to with capital letters (A, B, etc).
+The code in this repository is intended to help explore the identification of abnormalities in lux data.
+Eventually part of this code may be migrated to LightLogR.
+
+The identification of abnormalities is done based on criteria referred to with capital letters (A, B, etc),
+and explained inside the code of function [classifyAbnormal](https://github.com/vincentvanhees/pilot-nonwear-lux/blob/main/R/classifyAbnormal.R).
 
 ## Install and load
 
