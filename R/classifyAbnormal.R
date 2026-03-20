@@ -33,7 +33,7 @@ classifyAbnormal = function(data,
   N = nrow(data) #length(which(!is.na(data$Lux)))
   original_colnames = colnames(data)
   #============================================
-  # Derive temporal statistics as used for the various classifiers further down
+  # Derive temporal statistics which are used across classification criteria further down
   tempStats = temporalStatistics(data = data,
                                  epoch_size = epoch_size,
                                  lowLuxThreshold = lowLuxThreshold,
@@ -42,7 +42,7 @@ classifyAbnormal = function(data,
   data = tempStats$data
   daily_stats = tempStats$daily_stats
   #============================================
-  # Classify abnormality based on time series (Criteria A-B)
+  # Classify abnormality based on epoch-by-epoch time series (Criteria A-B)
   data$indicatorA = data$indicatorB = 0 # 0 = good, 1 = potentially abnormal
   # -------------------------------
   # Criteria A:
@@ -143,7 +143,7 @@ classifyAbnormal = function(data,
     data$indicator_G[time_jumps] = 1
   }
   #--------------------------------------------
-  # Composite score by colapsing all scores into one
+  # Composite indicator by collapsing all indicators into one
   hasNonZero = function(x) {
     if (any(x != 0, na.rm = TRUE)) {
       return(1)
