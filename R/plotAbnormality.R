@@ -3,8 +3,8 @@
 #'
 #' @description Plot data with abnormality classifications
 #'
-#' @param x Tibble, that holds at least columns Datetime, Lux, nonwearA, \cr
-#' nonwearB, nonwearC, nonwearD, nonwearE, nonwearF
+#' @param x Tibble, that holds at least columns Datetime, Lux, indicator_A, \cr
+#' indicator_B, indicator_C, indicator_D, indicator_E, indicator_F
 #'
 #' @return A plot
 #' 
@@ -13,36 +13,47 @@
 #' @export
 
 plotAbnormality = function(x) {
-  # plot classifications in lower half of the plot
+  # Extract indicator names
+  indicator_col_names = grep(pattern = "indicator_", x = colnames(x), value = TRUE)
+  N_indicators = length(indicator_col_names)
+  # Generate colours for the indicators, the composite indicator and the reference value
+  colors = rainbow(N_indicators + 2)
+  # Define scale and offsets for the positioning of the horizontal lines
   scale_value = max(x$Lux, na.rm = TRUE) * 0.5
   offset_value = scale_value * 0.02
-  colors = c("orange","brown", "cyan", "purple", "darkgreen", "grey", "pink", "red" , "lightblue")
-  par(mar = c(5.1, 4.1, 4.1, 9))
+  spacing = scale_value * 0.04
+  # Plotting
+  par(mar = c(5.1, 4.1, 4.1, 9)) 
+  # Line for lux values
   plot(x$Datetime, x$Lux, type = "l",
        xlab = "Time (with hourly grid lines)", ylab = "Lux", bty = "l")
   par(lwd = 6, lend = 2)
   # Vertical grid lines for each hour
   abline(v = x$Datetime[which(format(x$Datetime, "%M:%S") == "00:00")],
-         lty = 3, lwd = 0.5, col = "black")
-  # Classification based on each criteria (A-G)
-  lines(x$Datetime, x$nonwearA * scale_value + offset_value, type = "l", xlab = "",
-        main = "lux-based nonwear", col = colors[1])
-  lines(x$Datetime, x$nonwearB * scale_value * 0.96 + offset_value, type = "l", col = colors[2])
-  lines(x$Datetime, x$nonwearC * scale_value * 0.92  + offset_value, type = "l", col = colors[3])
-  lines(x$Datetime, x$nonwearD * scale_value * 0.88 + offset_value, type = "l", col = colors[4])
-  lines(x$Datetime, x$nonwearE * scale_value * 0.84  + offset_value, type = "l", col = colors[5])
-  lines(x$Datetime, x$nonwearF * scale_value * 0.80  + offset_value, type = "l", col = colors[6])
-  lines(x$Datetime, x$nonwearG * scale_value * 0.76 + offset_value, type = "l", col = colors[7])
-  # Composite classification
-  lines(x$Datetime, x$nonwear_estimate * scale_value * 0.72, type = "l", xlab = "", col = colors[8])
-  # Reference classification
-  lines(x$Datetime, x$nonwear_ref * scale_value * 0.68, type = "l", xlab = "", col = colors[9])
-  # Plot original lux signal on top
+         lty = 3, lwd = 0.5, col = "black") 
+  # Line for each indicator (criteria)
+  for (i in 1:length(indicator_col_names)) {
+    indicator_name = indicator_col_names[i]
+    if (i == 1) {
+      lines(x$Datetime, unlist(x[, indicator_name]) * scale_value + offset_value, type = "l", xlab = "",
+            main = "lux-based indicator_", col = colors[i])
+    } else {
+      lines(x$Datetime, unlist(x[, indicator_name]) * scale_value + offset_value, type = "l", col = colors[i])
+    }
+    scale_value = scale_value - spacing
+  }
+  # Line for the composite classification
+  lines(x$Datetime, unlist(x$comp_estimate) * scale_value, type = "l", col = colors[i + 1])
+  scale_value = scale_value - spacing
+  # Line for reference classification
+  lines(x$Datetime, unlist(x$nonwear_ref) * scale_value, type = "l", col = colors[i + 2])
+  scale_value = scale_value - spacing
+  # Line for original lux signal on top
   lines(x$Datetime, x$Lux, type = "l", lwd = 1)
-  # Legend
+  # Legend to explain colours of all lines
   par(lwd = 1, xpd = TRUE)
-  legend("topright", legend = c("criteria A", "criteria B", "criteria C", "criteria D",
-                                "criteria E", "criteria F", "criteria G", "criteria A-G",
-                                "reference"),
-         lty = rep(1, 9), lwd = rep(6, 9), col = colors, inset = c(-0.25, 0))
+  legend_names = c(indicator_col_names, "any criteria", "reference")
+  Nleg = length(legend_names)
+  legend("topright", legend = legend_names,
+         lty = rep(1, Nleg), lwd = rep(6, Nleg), col = colors, inset = c(-0.25, 0))
 }

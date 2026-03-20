@@ -43,12 +43,12 @@ classifyAbnormal = function(data,
   daily_stats = tempStats$daily_stats
   #============================================
   # Classify abnormality based on time series (Criteria A-B)
-  data$nonwearA = data$nonwearB = 0 # 0 = good, 1 = potentially abnormal
+  data$indicatorA = data$indicatorB = 0 # 0 = good, 1 = potentially abnormal
   # -------------------------------
   # Criteria A:
   # Any time window in the data longer than plausible sleep window (16 hours)
   # that is filled with mostly zeros.
-  data$nonwearA = longLowValue(x = data$p95_per_16hours,
+  data$indicator_A = longLowValue(x = data$p95_per_16hours,
                                x_threshold = lowLuxThreshold,
                                window_size_hours = maxLowLuxSequenceHours,
                                step_size = step_size,
@@ -57,11 +57,11 @@ classifyAbnormal = function(data,
   # Criteria B:
   # Time windows with consistently a non-zero Lux but hardly any lux variation for at
   # least an hour or variance in the derivative of the lux.
-  data$nonwearB = constantNonZeroLux(data, minimum_relval_per_hour)
+  data$indicator_B = constantNonZeroLux(data, minimum_relval_per_hour)
   #============================================
   # Classify abnormality based on daily statistics (Criteria C-F)
   N_epochs_per_day = (60/epoch_size) * 24 * 60
-  daily_stats$nonwearC = daily_stats$nonwearD = daily_stats$nonwearE = daily_stats$nonwearF = 0
+  daily_stats$indicator_C = daily_stats$indicator_D = daily_stats$indicator_E = daily_stats$indicator_F = 0
   # Assess whether there are 3 days of data
   derive_ref_values = N / N_epochs_per_day > N_days_required_daily_stats
   if (derive_ref_values) { 
@@ -89,7 +89,7 @@ classifyAbnormal = function(data,
                       daily_stats$n_peaks < mean_daily_n_peaks * 0.5) &
                      daily_stats$n_values > N_epochs_per_day * 0.5)
   if (length(detect_C) > 0) {
-    daily_stats$nonwearC[detect_C] = 1
+    daily_stats$indicator_C[detect_C] = 1
   }
   #--------------------------------------------
   # Criteria D:
@@ -100,7 +100,7 @@ classifyAbnormal = function(data,
   # 5th percentile
   detect_D = which(daily_stats$p05 - median_daily_p05 > 3 * sd_daily_p05)
   if (length(detect_D) > 0) {
-    daily_stats$nonwearD[detect_D] = 1
+    daily_stats$indicator_D[detect_D] = 1
   }
   #--------------------------------------------
   # Criteria E:
@@ -109,7 +109,7 @@ classifyAbnormal = function(data,
   daily_stats$var_p95mean =  round(daily_stats$p95 / mean_daily_mean_lux, digits = 2)
   detect_E = which(daily_stats$var_p95mean < 2 & daily_stats$n_values > 1200)
   if (length(detect_E) > 0) {
-    daily_stats$nonwearE[detect_E] = 1
+    daily_stats$indicator_E[detect_E] = 1
   }
   #--------------------------------------------
   # Criteria F:
@@ -121,26 +121,26 @@ classifyAbnormal = function(data,
   detect_F = which(daily_stats$var_ncnz > 5 &
                      daily_stats$ncnz > 300 & daily_stats$n_values > 1200)
   if (length(detect_F) > 0) {
-    daily_stats$nonwearF[detect_F] = 1
+    daily_stats$indicator_F[detect_F] = 1
   }
   #--------------------------------------------
   # merge daily_stats into data
   data$date = as.Date(data$Datetime)
-  data$nonwearC = data$nonwearD = data$nonwearE = data$nonwearF = 0
+  data$indicator_C = data$indicator_D = data$indicator_E = data$indicator_F = 0
   for (j in 1:nrow(daily_stats)) {
-    data$nonwearC[which(data$date == daily_stats$day[j])] = daily_stats$nonwearC[j]
-    data$nonwearD[which(data$date == daily_stats$day[j])] = daily_stats$nonwearD[j]
-    data$nonwearE[which(data$date == daily_stats$day[j])] = daily_stats$nonwearE[j]
-    data$nonwearF[which(data$date == daily_stats$day[j])] = daily_stats$nonwearF[j]
+    data$indicator_C[which(data$date == daily_stats$day[j])] = daily_stats$indicator_C[j]
+    data$indicator_D[which(data$date == daily_stats$day[j])] = daily_stats$indicator_D[j]
+    data$indicator_E[which(data$date == daily_stats$day[j])] = daily_stats$indicator_E[j]
+    data$indicator_F[which(data$date == daily_stats$day[j])] = daily_stats$indicator_F[j]
   }
   #--------------------------------------------
   # Criteria G:
   # Long time jumps are always nonwear
   # Here defined as NA percentage per hour being NA or 100.
   time_jumps = which(is.na(data$NAper_per_hour) | data$NAper_per_hour == 100)
-  data$nonwearG = 0
+  data$indicator_G = 0
   if (length(time_jumps) > 0) {
-    data$nonwearG[time_jumps] = 1
+    data$indicator_G[time_jumps] = 1
   }
   #--------------------------------------------
   # Composite score by colapsing all scores into one
@@ -151,10 +151,9 @@ classifyAbnormal = function(data,
       return(0)
     }
   }
-  nonwear_col_names = c("nonwearA", "nonwearB", "nonwearC", "nonwearD",
-                        "nonwearE", "nonwearF", "nonwearG")
-  data$nonwear_estimate = apply(data[, nonwear_col_names], 1, hasNonZero)
+  indicator_col_names = grep(pattern = "indicator_", x = colnames(data), value = TRUE)
+  data$comp_estimate = apply(data[, indicator_col_names], 1, hasNonZero)
   # Remove temporary variables
-  # data = data[,c(original_colnames, grep(pattern = "nonwear", x = colnames(data), value = TRUE))]
+  # data = data[,c(original_colnames, grep(pattern = "indicator", x = colnames(data), value = TRUE))]
   return(data)
 }

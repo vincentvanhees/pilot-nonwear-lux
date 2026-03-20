@@ -64,14 +64,12 @@ applyClassifyAbnormal = function(data,
       # Generate plot if plot_path is specified
       if (!is.null(plot_path)) {
         # Set wear to NA to ease plot
-        is.na(data_subset$nonwearA[which(data_subset$nonwearA == 0)]) = TRUE
-        is.na(data_subset$nonwearB[which(data_subset$nonwearB == 0)]) = TRUE
-        is.na(data_subset$nonwearC[which(data_subset$nonwearC == 0)]) = TRUE
-        is.na(data_subset$nonwearD[which(data_subset$nonwearD == 0)]) = TRUE
-        is.na(data_subset$nonwearE[which(data_subset$nonwearE == 0)]) = TRUE
-        is.na(data_subset$nonwearF[which(data_subset$nonwearF == 0)]) = TRUE
-        is.na(data_subset$nonwearG[which(data_subset$nonwearG == 0)]) = TRUE
-        is.na(data_subset$nonwear_estimate[which(data_subset$nonwear_estimate == 0)]) = TRUE
+        indicator_col_names = grep(pattern = "indicator_", x = colnames(data_subset), value = TRUE)
+        for (j in 1:length(indicator_col_names)) {
+          indicator_name = indicator_col_names[j]
+          is.na(data_subset[which(data_subset[, indicator_name] == 0), indicator_name]) = TRUE
+        }
+        is.na(data_subset$comp_estimate[which(data_subset$comp_estimate == 0)]) = TRUE
         is.na(data_subset$nonwear_ref[which(data_subset$nonwear_ref == 0)]) = TRUE
         if (length(which(is.na(data_subset$Lux)))) {
           is.na(data_subset$Lux[which(is.na(data_subset$Lux))]) = TRUE
