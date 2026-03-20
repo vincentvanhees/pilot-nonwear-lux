@@ -36,6 +36,23 @@ for (filename in c("Left_Temple_Sensor_Data.csv", "Right_Temple_Sensor_Data.csv"
   data$weight_G = test_values
   colnames(data)[3] = "nonwear_ref" # rename to clarify that this is reference nonwear
   
+  
+  # Example of functions to add your own criteria
+  
+  # Function to define additional statistics to be generated inside temporalStatistics.
+  addNoiseToLux = function(data) {
+    # this example is obviously non-sensical
+    data$new_statistic = data$Lux - rnorm(n = nrow(data), mean = 0, sd = 1)
+    return(data)
+  }
+  # One function to define additional criteria to be generated inside classifyAbnormal.R
+  newCriteria = function(data) {
+    # this example is obviously non-sensical, but demonstrates the combined use of a new temporal statistics
+    # being new_statistic and an existing statistic relvar_hour
+    indicator = ifelse(data$new_statistic + data$relvar_hour > 20000, yes = 1, no = 0)
+    return(indicator) # needs to be 0 or 1
+  }
+  
   out = applyClassifyAbnormal(data, # assumed to have columns time and Lux, and represent a continuous regular time series
                               resolution_seconds = 30, # for computational reasons only derive statistics at 30 sec resolution
                               N_days_required_daily_stats = 3,
@@ -44,5 +61,7 @@ for (filename in c("Left_Temple_Sensor_Data.csv", "Right_Temple_Sensor_Data.csv"
                               lowLuxThreshold = 50, # Lux below this value is considered closed to zero
                               maxLowLuxSequenceHours = 16,
                               plot_path = "D:/Projects/Spitschan",
-                              plot_id =  filename) # max number of hours with low Lux
+                              plot_id =  filename,
+                              userStatsFunction = addNoiseToLux,
+                              userCriteriaFunction = newCriteria) # max number of hours with low Lux
 }

@@ -16,6 +16,8 @@
 #' @param maxLowLuxSequenceHours Numeric, maximum number of hours with low lux as passed on to \link{classifyAbnormal}
 #' @param plot_path Character, to indicate the folder path where to store output plot in png format
 #' @param plot_id Character or numeric to be appended to the end of the plot file name
+#' @param userStatsFunction function as provide by user for deriving temporal statistics
+#' @param userCriteriaFunction function as provide by user for applying a new criteria
 #'
 #' @return Tibble data provided as input enhanced with classifications
 #' 
@@ -31,7 +33,9 @@ applyClassifyAbnormal = function(data,
                                 lowLuxThreshold = 50,
                                 maxLowLuxSequenceHours = 16,
                                 plot_path = NULL,
-                                plot_id = "") {
+                                plot_id = "",
+                                userStatsFunction = NULL,
+                                userCriteriaFunction = NULL) {
   # Remove duplicates
   data = data[!duplicated(data),]
   
@@ -63,7 +67,9 @@ applyClassifyAbnormal = function(data,
                                     minimum_relval_per_hour = minimum_relval_per_hour, #minimum relative variance per hour
                                     epoch_size = epoch_size,
                                     lowLuxThreshold = lowLuxThreshold, # Lux below this value is considered closed to zero
-                                    maxLowLuxSequenceHours = maxLowLuxSequenceHours)
+                                    maxLowLuxSequenceHours = maxLowLuxSequenceHours,
+                                    userStatsFunction = userStatsFunction,
+                                    userCriteriaFunction = userCriteriaFunction)
       # Generate plot if plot_path is specified
       if (!is.null(plot_path)) {
         # Set wear to NA to ease plot

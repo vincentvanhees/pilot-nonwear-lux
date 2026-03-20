@@ -8,6 +8,7 @@
 #' @param lowLuxThreshold Numeric, Lux value below which Lux is considered zero (darkness).
 #' @param maxLowLuxSequenceHours Numeric, maximum number of hours with low lux
 #' @param step_size Numeric, used as input for function \link{rollApply}
+#' @param userStatsFunction function as provide by user
 #' 
 #' @export
 #'
@@ -16,7 +17,8 @@ temporalStatistics = function(data,
                               epoch_size = 5,
                               lowLuxThreshold = 50,
                               maxLowLuxSequenceHours = 16,
-                              step_size = NULL)
+                              step_size = NULL,
+                              userStatsFunction = NULL)
 {
   #=============================================================================
   # Declare local functions to aid derivation of temporal statistics:
@@ -99,6 +101,10 @@ temporalStatistics = function(data,
   nonzero = which(data$mean_per_hour != 0)
   if (length(nonzero) > 0) {
     data$relvar_hour[nonzero] = data$sd_per_hour[nonzero] / data$mean_per_hour[nonzero]
+  }
+  if (!is.null(userStatsFunction)) {
+    # add user defined statistics
+    data = userStatsFunction(data)
   }
   invisible(list(data = data, daily_stats = daily_stats))
 }

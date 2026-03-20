@@ -9,7 +9,8 @@ temporalStatistics(
   epoch_size = 5,
   lowLuxThreshold = 50,
   maxLowLuxSequenceHours = 16,
-  step_size = NULL
+  step_size = NULL,
+  userStatsFunction = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ temporalStatistics(
 \item{maxLowLuxSequenceHours}{Numeric, maximum number of hours with low lux}
 
 \item{step_size}{Numeric, used as input for function \link{rollApply}}
+
+\item{userStatsFunction}{function as provide by user}
 }
 \value{
 Tibble data provided as input enhanced with temporal statistics

@@ -15,6 +15,8 @@
 #' @param epoch_size Numeric, epoch size  of input data in seconds
 #' @param lowLuxThreshold Numeric, Lux value below which Lux is considered zero (darkness).
 #' @param maxLowLuxSequenceHours Numeric, maximum number of hours with low lux
+#' @param userStatsFunction function as provide by user for deriving temporal statistics
+#' @param userCriteriaFunction function as provide by user for applying a new criteria
 #'
 #' @return Tibble data provided as input enhanced with classifications
 #' 
@@ -27,7 +29,9 @@ classifyAbnormal = function(data,
                            minimum_relval_per_hour = 0.1,
                            epoch_size = 5,
                            lowLuxThreshold = 50,
-                           maxLowLuxSequenceHours = 16) 
+                           maxLowLuxSequenceHours = 16,
+                           userStatsFunction = NULL,
+                           userCriteriaFunction = NULL) 
 {
   if (length(table(diff(data$Datetime))) != 1) {
     stop("Irregular time series is not accepted for non-wear classification")
@@ -41,7 +45,8 @@ classifyAbnormal = function(data,
                                  epoch_size = epoch_size,
                                  lowLuxThreshold = lowLuxThreshold,
                                  maxLowLuxSequenceHours = maxLowLuxSequenceHours,
-                                 step_size = step_size)
+                                 step_size = step_size,
+                                 userStatsFunction = userStatsFunction)
   data = tempStats$data
   daily_stats = tempStats$daily_stats
   #============================================
@@ -144,6 +149,13 @@ classifyAbnormal = function(data,
   data$indicator_G = 0
   if (length(time_jumps) > 0) {
     data$indicator_G[time_jumps] = 1
+  }
+  
+  #--------------------------------------------
+  # Criteria H:
+  if (!is.null(userCriteriaFunction)) {
+    data$indicator_H = 0
+    data$indicator_H = userCriteriaFunction(data)
   }
   
   #===========================================

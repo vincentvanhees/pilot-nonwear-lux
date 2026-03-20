@@ -53,6 +53,10 @@ Wrapper function around function `classifyAbnormal`:
 
 ## How to experiment with new or modified criteria
 
+- Provide input argument `userStatsFunction` and `userCriteriaFunction` to generate your own custom temporal statistics and subsequent classification criteria.
+
+OR
+
 - Modify `temporalStatistics` such that the temporal statistics you need are generated. Note that the functional already generates statistics at two time resolutions:
   1. Per day
   2. Per epoch, with code to apply rolling window characteristics

@@ -11,7 +11,9 @@ classifyAbnormal(
   minimum_relval_per_hour = 0.1,
   epoch_size = 5,
   lowLuxThreshold = 50,
-  maxLowLuxSequenceHours = 16
+  maxLowLuxSequenceHours = 16,
+  userStatsFunction = NULL,
+  userCriteriaFunction = NULL
 )
 }
 \arguments{
@@ -33,6 +35,10 @@ of days required for deriving daily statistics}
 \item{lowLuxThreshold}{Numeric, Lux value below which Lux is considered zero (darkness).}
 
 \item{maxLowLuxSequenceHours}{Numeric, maximum number of hours with low lux}
+
+\item{userStatsFunction}{function as provide by user for deriving temporal statistics}
+
+\item{userCriteriaFunction}{function as provide by user for applying a new criteria}
 }
 \value{
 Tibble data provided as input enhanced with classifications

@@ -13,7 +13,9 @@ applyClassifyAbnormal(
   lowLuxThreshold = 50,
   maxLowLuxSequenceHours = 16,
   plot_path = NULL,
-  plot_id = ""
+  plot_id = "",
+  userStatsFunction = NULL,
+  userCriteriaFunction = NULL
 )
 }
 \arguments{
@@ -38,6 +40,10 @@ of days required for deriving daily statistics as passed on to \link{classifyAbn
 \item{plot_path}{Character, to indicate the folder path where to store output plot in png format}
 
 \item{plot_id}{Character or numeric to be appended to the end of the plot file name}
+
+\item{userStatsFunction}{function as provide by user for deriving temporal statistics}
+
+\item{userCriteriaFunction}{function as provide by user for applying a new criteria}
 }
 \value{
 Tibble data provided as input enhanced with classifications
