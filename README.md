@@ -42,7 +42,7 @@ Used to configure the identification criteria as can be found in the [documentat
 - Extracts statistics from the time series with the help of function `temporalStatistics`
 - Uses these temporal statistics to classify the time series with help of functions `constantNonZeroLux`, `longLowValue`, and `rollApply`
 - Applies the weight factors (see weight_X above)
-- Returns the classifications of abnormality via new column names that all start with idicator_X, where X refers to the criteria.
+- Returns the classifications of abnormality via new column names that all start with indicator_X, where X refers to the criteria.
 
 
 ### applyClassifyAbnormal
