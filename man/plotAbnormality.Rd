@@ -7,8 +7,8 @@
 plotAbnormality(x)
 }
 \arguments{
-\item{x}{Tibble, that holds at least columns Datetime, Lux, nonwearA, \cr
-nonwearB, nonwearC, nonwearD, nonwearE, nonwearF}
+\item{x}{Tibble, that holds at least columns Datetime, Lux, indicator_A, \cr
+indicator_B, indicator_C, indicator_D, indicator_E, indicator_F}
 }
 \value{
 A plot

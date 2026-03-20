@@ -9,6 +9,7 @@
 #' @return A plot
 #' 
 #' @importFrom graphics abline legend lines par
+#' @importFrom grDevices rainbow
 #' 
 #' @export
 

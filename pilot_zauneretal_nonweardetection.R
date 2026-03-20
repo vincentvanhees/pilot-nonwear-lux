@@ -3,6 +3,7 @@ graphics.off()
 
 library(slider)
 library(abnormality)
+# devtools::load_all(".")
 load("D:/Code/ZaunerEtAl_NonWearDetection/data/cleaned/wear_data_cleaned.RData")
 
 epoch_size = 10
@@ -22,6 +23,17 @@ for (filename in c("Left_Temple_Sensor_Data.csv", "Right_Temple_Sensor_Data.csv"
   
   # keep only column names that will be used
   data = data[, c("Datetime", "Lux", "nonwear")]
+  
+  # Create random weights of 0 or 1
+  test_values = round(rnorm(mean = 0.3, sd = 0.2, n = nrow(data)))
+  test_values = pmin(pmax(test_values, 0), 1)
+  data$weight_A = test_values
+  data$weight_B = test_values
+  data$weight_C = test_values
+  data$weight_D = test_values
+  data$weight_E = test_values
+  data$weight_F = test_values
+  data$weight_G = test_values
   colnames(data)[3] = "nonwear_ref" # rename to clarify that this is reference nonwear
   
   out = applyClassifyAbnormal(data, # assumed to have columns time and Lux, and represent a continuous regular time series

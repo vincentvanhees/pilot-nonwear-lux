@@ -15,7 +15,10 @@ classifyAbnormal(
 )
 }
 \arguments{
-\item{data}{Tibble, that holds at least a Datetime and Lux column. Date time is expected to be a regular time series.}
+\item{data}{Tibble, that holds at least a Datetime and Lux column. \cr
+Date time is expected to be a regular time series. \cr
+If columns weight_X is included then this will be used as weighting for criteria X \cr
+, e.g. weight_A for criteria A.}
 
 \item{resolution_seconds}{Numeric, resolution in seconds at which to perform analysis. \cr
 When epoch_size is small, consider setting this to a multitude of the \code{epoch_size} to speed up processing.}

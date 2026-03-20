@@ -3,7 +3,10 @@
 #'
 #' @description Add classifications of potential abnormalities to input data.
 #'
-#' @param data Tibble, that holds at least a Datetime and Lux column. Date time is expected to be a regular time series.
+#' @param data Tibble, that holds at least a Datetime and Lux column. \cr
+#' Date time is expected to be a regular time series. \cr
+#' If columns weight_X is included then this will be used as weighting for criteria X \cr
+#' , e.g. weight_A for criteria A.
 #' @param resolution_seconds Numeric, resolution in seconds at which to perform analysis. \cr
 #' When epoch_size is small, consider setting this to a multitude of the \code{epoch_size} to speed up processing.
 #' @param N_days_required_daily_stats Numeric, integer to indicate the minimum number \cr
@@ -142,8 +145,19 @@ classifyAbnormal = function(data,
   if (length(time_jumps) > 0) {
     data$indicator_G[time_jumps] = 1
   }
+  
+  #===========================================
+  # Apply indicator specific weights if available.
+  # For example, weights_A are applied to indicator_A
+  indicator_col_names = grep(pattern = "indicator_", x = colnames(data), value = TRUE)
+  for (j in 1:length(indicator_col_names)) {
+    weight_column = gsub(pattern = "indicator", replacement = "weight", x = indicator_col_names[j])
+    if (weight_column %in% colnames(data)) {
+      data[, indicator_col_names[j]] = data[, indicator_col_names[j]] * data[, weight_column]
+    }
+  }
   #--------------------------------------------
-  # Composite indicator by collapsing all indicators into one
+  # Create composite indicator by collapsing all indicators into one
   hasNonZero = function(x) {
     if (any(x != 0, na.rm = TRUE)) {
       return(1)
@@ -151,7 +165,7 @@ classifyAbnormal = function(data,
       return(0)
     }
   }
-  indicator_col_names = grep(pattern = "indicator_", x = colnames(data), value = TRUE)
+  
   data$comp_estimate = apply(data[, indicator_col_names], 1, hasNonZero)
   # Remove temporary variables
   # data = data[,c(original_colnames, grep(pattern = "indicator", x = colnames(data), value = TRUE))]

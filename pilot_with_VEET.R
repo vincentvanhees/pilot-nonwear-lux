@@ -9,7 +9,7 @@ library(downlit)
 library(magick)
 
 library(abnormality)
-
+# devtools::load_all(".")
 
 path <- "D:/Projects/Spitschan/01_VEET_L.csv.zip"
 tz   <- "US/Central"
