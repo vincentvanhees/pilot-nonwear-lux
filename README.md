@@ -49,7 +49,8 @@ Used to configure the identification criteria as can be found in the [documentat
 
 Wrapper function around function `classifyAbnormal`:
 - Makes sure `classifyAbnormal` is only applied to segments of the data where there is data and skipping large time gaps.
-- Plots the resulting classification in a plot and save this to a png file.
+- Optional plots saved as png to show the resulting classification.
+- Returns cleaned object with all classifications, e.g. useful to generate your own visualisations.
 
 ## How to experiment with new or modified criteria
 
