@@ -7,11 +7,13 @@
 longLowValue(x, x_threshold, window_size_hours, step_size, epoch_size)
 }
 \arguments{
-\item{x}{Numeric vector with lux values}
+\item{x}{Numeric vector with rolling statistic based on window_size_hours \cr
+e.g. the 95th percentile}
 
 \item{x_threshold}{Numeric, threshold to defined low}
 
-\item{window_size_hours}{Numeric, rolling window size in hours as passed on to \link{rollApply}}
+\item{window_size_hours}{Numeric, rolling window size in hours as passed \cr
+on to \link{rollApply}}
 
 \item{step_size}{Numeric, integer as passed on to \link{rollApply}.}
 
@@ -22,5 +24,8 @@ Numeric vector with with length equal to x with classification  \cr
 (1 = condition met, 0 = condition not met)
 }
 \description{
-Classify long period with low value
+Classify long period with low valued rolling statistic. This function \cr
+is a post-processing step of rollApply, where rollApply classifies \cr
+only the mid-point of the rolling window, and this function then labels all the \cr
+points in a way accordingly, if the value is below x_threshold.
 }

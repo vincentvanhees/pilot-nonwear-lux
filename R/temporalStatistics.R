@@ -25,7 +25,7 @@ temporalStatistics = function(data,
   p05 = function(x) { #5th percentile of x
     return(as.numeric(quantile(x, probs = 0.05, na.rm = TRUE)))
   }
-  p95 = function(x) { #5th percentile of x
+  p95 = function(x) { #95th percentile of x
     return(as.numeric(quantile(x, probs = 0.95, na.rm = TRUE)))
   }
   NA_percentage = function(x) { # percentage of NA values in x
